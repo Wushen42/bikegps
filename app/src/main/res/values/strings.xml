@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">BikeGps</string>
+    <string name="live_data">Live Data</string>
+    <string name="record">Record</string>
+    <string name="settings">Settings</string>
+    <string name="intent_actions">ias</string>
+    <string name="intent_notification_extra">ine</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="notification_title">notification_title</string>
+    <string name="notification_speed">notification_speed</string>
+    <string name="notification_distance">notification_distance</string>
+    <string name="notification_time">notification_time</string>
+    <string name="notification_altitude">notification_altitude</string>
+</resources>
