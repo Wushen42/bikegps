@@ -18,6 +18,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.lifecycle.LifecycleService;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.bikegps.data.DataHolder;
 import com.example.bikegps.data.Receiver;
@@ -26,8 +27,9 @@ import java.text.DecimalFormat;
 
 import static android.app.Notification.EXTRA_NOTIFICATION_ID;
 
-public class ForegroundService extends LifecycleService {
+public class ForegroundService extends Service {
     public static final String CHANNEL_ID = "ForegroundServiceChannel";
+    private DataHolder mDataHolder;
     private String title="Stopped";
     private String toto="ah";
     private float mSpeed=0;
@@ -52,6 +54,7 @@ public class ForegroundService extends LifecycleService {
     @Override
     public void onCreate() {
         super.onCreate();
+       // mDataHolder= new ViewModelProvider().get(DataHolder.class);
         createNotificationChannel();
         this.startForeground(1, consistentNotification());
     }
@@ -87,7 +90,7 @@ public class ForegroundService extends LifecycleService {
         super.onStartCommand(intent,flags,startId);
 
 
-        title=DataHolder.getInstance(this).getState().getValue();
+       /* title=DataHolder.getInstance(this).getState().getValue();
         Float tSpeed=DataHolder.getInstance(this).getSpeed().getValue();
         mSpeed= tSpeed==null?0:tSpeed;
         Double tDouble=DataHolder.getInstance(this).getDistance().getValue();
@@ -123,7 +126,7 @@ public class ForegroundService extends LifecycleService {
                // notificationLayout.setTextViewText(R.id.notification_title,s);
                 writeNotification();
             }
-        });
+        });*/
 
         return START_NOT_STICKY;
     }
@@ -134,7 +137,7 @@ public class ForegroundService extends LifecycleService {
     @Override
     public IBinder onBind(Intent intent) {
         // TODO: Return the communication channel to the service.
-        super.onBind(intent);
+       // super.onBind(intent);
         throw new UnsupportedOperationException("Not yet implemented");
     }
     private void createNotificationChannel() {

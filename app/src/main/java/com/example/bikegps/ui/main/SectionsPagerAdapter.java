@@ -20,7 +20,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
 
     @StringRes
-    private static final int[] TAB_TITLES = new int[]{R.string.live_data,R.string.record ,R.string.settings};
+    private static final int[] TAB_TITLES = new int[]{R.string.live_data/*,R.string.record ,R.string.settings*/};
     private final Context mContext;
 
     public SectionsPagerAdapter(Context context, FragmentManager fm) {

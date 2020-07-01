@@ -1,7 +1,13 @@
 package com.example.bikegps.ui.main;
 
+import android.app.Service;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 
+import com.example.bikegps.data.AcquisitionService;
 import com.example.bikegps.data.DataHolder;
 import com.example.bikegps.R;
 
@@ -36,7 +43,19 @@ public class LivePositionFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dataModel =  DataHolder.getInstance(this.getContext());
+        Intent mIntent = new Intent(this.getActivity(), AcquisitionService.class);
+        ServiceConnection serviceConnection=new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+                dataModel=((AcquisitionService)iBinder).mDataHolder;
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+                Log.d("OnDisconnected",componentName+"");
+            }
+        };
+        this.getActivity().bindService(mIntent, serviceConnection,Service.BIND_AUTO_CREATE);
 
     }
 
@@ -56,7 +75,7 @@ public class LivePositionFragment extends Fragment {
         final TextView altitudeView = root.findViewById(R.id.altitude);
         final TextView compassText = root.findViewById(R.id.compass_text);
         final ImageView compassImage = root.findViewById(R.id.compassImage);
-        dataModel.getCurrentLocation().observe(getViewLifecycleOwner(), new Observer<Location>() {
+       /* dataModel.getCurrentLocation().observe(getViewLifecycleOwner(), new Observer<Location>() {
             @Override
             public void onChanged(Location location) {
                 speedView.setText(trimNumber(location.getSpeed()*5/18));

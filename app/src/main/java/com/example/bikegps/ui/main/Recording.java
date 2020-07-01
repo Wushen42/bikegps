@@ -38,7 +38,7 @@ public class Recording extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        gpsDataModel= DataHolder.getInstance(this.getContext());
+        //gpsDataModel= DataHolder.Instance();
         gpsDataModel.getCurrentLocation().observe(this, new Observer<Location>() {
             @Override
             public void onChanged(Location location) {

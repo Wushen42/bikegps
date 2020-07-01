@@ -5,10 +5,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
+import com.example.bikegps.data.AcquisitionService;
 import com.example.bikegps.data.DataHolder;
 import com.google.android.material.tabs.TabLayout;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.BundleCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
@@ -40,9 +42,8 @@ public class MainActivity extends AppCompatActivity{
         if(requestedPermissions.size()<0) {
             requestPermissions(requestedPermissions.toArray(new String[requestedPermissions.size()]), REQUEST_LOCATION);
         }
-        Intent serviceIntent = new Intent(this, ForegroundService.class);
-        ContextCompat.startForegroundService(this, serviceIntent);
-        DataHolder.getInstance(this.getApplicationContext());
+        Intent serviceIntent = new Intent(this, AcquisitionService.class);
+        startService(serviceIntent);
         SectionsPagerAdapter sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
         ViewPager viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(sectionsPagerAdapter);
@@ -75,6 +76,9 @@ public class MainActivity extends AppCompatActivity{
         }
         if(checkSelfPermission(Manifest.permission.INTERNET)==PackageManager.PERMISSION_DENIED){
             requestedPermissions.add(Manifest.permission.INTERNET);
+        }
+        if(checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)==PackageManager.PERMISSION_DENIED){
+            requestedPermissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
         }
     }
 

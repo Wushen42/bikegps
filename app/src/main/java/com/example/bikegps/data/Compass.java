@@ -8,6 +8,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
@@ -25,9 +26,9 @@ public class Compass implements SensorEventListener {
 
     private DataHolder mDataHolder;
     private Context mContext;
-    public Compass(Context context,@Nullable DataHolder dataHolder){
+    public Compass(Context context, @NonNull DataHolder dataHolder){
         mContext=context;
-        mDataHolder=dataHolder!=null?dataHolder:DataHolder.getInstance(context);
+        mDataHolder=dataHolder;
         mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         start();
     }
