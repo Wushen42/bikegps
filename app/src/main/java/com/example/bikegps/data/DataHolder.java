@@ -17,6 +17,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
+import com.example.bikegps.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 
 import java.util.List;
@@ -24,7 +25,6 @@ import java.util.List;
 public class DataHolder {
 
     private MutableLiveData<Integer> mRotationCompass =new MutableLiveData<>();
-    private MutableLiveData<String> mDirectionCompass=new MutableLiveData<>();
     public void setRotationCompass(Integer i){
         mRotationCompass.postValue(i);
     }
@@ -53,7 +53,7 @@ public class DataHolder {
                     where = "E";
                 if (i <= 80 && i > 10)
                     where = "NE";
-                return where;
+                return i+"° "+ where;
             }
         });
     }
@@ -65,29 +65,49 @@ public class DataHolder {
     public LiveData<Double> getDistance(){
         return mDistance;
     }
-    private MutableLiveData<String> mState=new MutableLiveData<>();
-    public void setState(String s){
-        mState.postValue(s);
+
+    private MutableLiveData<Integer> mState=new MutableLiveData<>();
+    public void setState(int i){
+        mState.postValue(i);
     }
-    public LiveData<String> getState(){
+    public LiveData<Integer> getState(){
         return mState;
     }
-    private MutableLiveData<Float> mSpeed = new MutableLiveData<>();
+
     private MutableLiveData<Location> mCurrentLocation = new MutableLiveData<>();
     public void setCurrentLocation(Location loc){
+        tryUpdate(loc,getLastKnownLocationLocation().getValue());
         mCurrentLocation.postValue(loc);
+    }
+    private void tryUpdate(Location current,Location last){
+        if(getState().getValue()==null) return;
+        if(getState().getValue()!= R.string.running) return;
+        if (last==null){
+            setLastKnownLocationLocation(current);
+            return;
+        }
+        float dist=current.distanceTo(last);
+        if(dist<50) return;
+        if(getDistance().getValue()==null){
+            setDistance((double) dist);
+            return;
+        }
+        setDistance(getDistance().getValue()+dist);
+        setLastKnownLocationLocation(current);
+
     }
     public LiveData<Location> getCurrentLocation(){
         return mCurrentLocation;
     }
 
-    public void setSpeed(float i) {
-        mSpeed.postValue((i*5/18));
+    private MutableLiveData<Location> mLastKnownLocation = new MutableLiveData<>();
+    public void setLastKnownLocationLocation(Location loc){
+        mLastKnownLocation.postValue(loc);
+    }
+    public LiveData<Location> getLastKnownLocationLocation(){
+        return mLastKnownLocation;
     }
 
-    public LiveData<Float> getSpeed() {
-        return mSpeed;
-    }
 
     public DataHolder(){
 

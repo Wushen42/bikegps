@@ -5,14 +5,23 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.location.Location;
 import android.os.Build;
 import android.os.IBinder;
 import android.provider.ContactsContract;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.RemoteViews;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.core.app.BundleCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -20,26 +29,27 @@ import androidx.lifecycle.LifecycleService;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.bikegps.data.AcquisitionService;
 import com.example.bikegps.data.DataHolder;
 import com.example.bikegps.data.Receiver;
 
 import java.text.DecimalFormat;
+import java.util.Objects;
 
 import static android.app.Notification.EXTRA_NOTIFICATION_ID;
 
 public class ForegroundService extends Service {
     public static final String CHANNEL_ID = "ForegroundServiceChannel";
-    private DataHolder mDataHolder;
+    private DataHolder mDataModel;
     private String title="Stopped";
     private String toto="ah";
     private float mSpeed=0;
-    private double distance=0;
+    private double mDistance=0;
     public ForegroundService() {
     }
 
     private String getMessage(){
-        if(title=="Stopped") return formatSpeed(mSpeed);
-        return formatSpeed(mSpeed)+" distance: "+trimNumberOne(distance)+" km" + toto;
+        return new DecimalFormat("#.#").format(mSpeed*3.6)+"km/h -- distance: "+trimNumberOne(mDistance/1000)+" km";
     }
     private String formatSpeed(float s){
         return trimNumber(s)+" km/h";
@@ -51,9 +61,41 @@ public class ForegroundService extends Service {
     private String trimNumberOne(double f){
         return new DecimalFormat("#.#").format(f);
     }
+    private Observer<Location> locationObserver =new Observer<Location>() {
+        @Override
+        public void onChanged(Location location) {
+            mSpeed=location.getSpeed();
+            writeNotification();
+        }
+    };
+    private Observer<Double> distanceObserver = new Observer<Double>() {
+        @Override
+        public void onChanged(Double aDouble) {
+            mDistance=aDouble;
+            writeNotification();
+        }
+    };
     @Override
     public void onCreate() {
         super.onCreate();
+        Intent mIntent = new Intent(getApplicationContext(),AcquisitionService.class);
+        mServiceConnection=new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+
+                mDataModel=((AcquisitionService.MyBinder) iBinder).getDataHolder();
+                mDataModel.getCurrentLocation().observeForever(locationObserver);
+                mDataModel.getDistance().observeForever(distanceObserver);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+                mDataModel.getCurrentLocation().removeObserver(locationObserver);
+                mDataModel.getDistance().observeForever(distanceObserver);
+            }
+        };
+
+        bindService(mIntent,mServiceConnection,Service.BIND_AUTO_CREATE);
        // mDataHolder= new ViewModelProvider().get(DataHolder.class);
         createNotificationChannel();
         this.startForeground(1, consistentNotification());
@@ -78,16 +120,19 @@ public class ForegroundService extends Service {
                 .build();
     }
     private void writeNotification(){
+        Log.d("Notif","writeNotification");
         NotificationManagerCompat.from(this).notify(1,consistentNotification());
     }
 
     private String formatHeader(float speed){
         return new String(trimNumber(speed)+"km/h  ");
     }
+    ServiceConnection mServiceConnection;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent,flags,startId);
+
 
 
        /* title=DataHolder.getInstance(this).getState().getValue();
@@ -130,16 +175,23 @@ public class ForegroundService extends Service {
 
         return START_NOT_STICKY;
     }
+
+
     @Override
     public void onDestroy() {
         super.onDestroy();
+        stopSelf();
+        mDataModel.getCurrentLocation().removeObserver(locationObserver);
+        mDataModel.getDistance().observeForever(distanceObserver);
+        unbindService(mServiceConnection);
     }
+
+    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-       // super.onBind(intent);
-        throw new UnsupportedOperationException("Not yet implemented");
+        return null;
     }
+
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel serviceChannel = new NotificationChannel(

@@ -67,7 +67,7 @@ public class Recording extends Fragment {
             @Override
             public void onClick(View view) {
                 lastValidLocation=null;
-                gpsDataModel.setState("Running");
+                gpsDataModel.setState(R.string.running);
             }
         });
         return root;
