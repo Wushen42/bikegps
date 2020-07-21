@@ -182,7 +182,7 @@ public class ForegroundService extends Service {
         super.onDestroy();
         stopSelf();
         mDataModel.getCurrentLocation().removeObserver(locationObserver);
-        mDataModel.getDistance().observeForever(distanceObserver);
+        mDataModel.getDistance().removeObserver(distanceObserver);
         unbindService(mServiceConnection);
     }
 

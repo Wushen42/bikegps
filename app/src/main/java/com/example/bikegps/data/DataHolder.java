@@ -110,7 +110,11 @@ public class DataHolder {
 
 
     public DataHolder(){
-
+        setDistance(0.0);
+        setLastKnownLocationLocation(null);
+        setCurrentLocation(null);
+        setRotationCompass(0);
+        setState(R.string.stop);
     }
 
 }
