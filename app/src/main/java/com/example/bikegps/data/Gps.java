@@ -1,6 +1,7 @@
 package com.example.bikegps.data;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -23,9 +24,20 @@ import java.util.concurrent.Callable;
 
 public class Gps {
     private DataHolder mDataHolder;
+    private LocationCallback locationCallback;
+    private FusedLocationProviderClient client;
+    private boolean isLocationCallbackActive;
     public Gps(Context context,@NonNull DataHolder dataHolder){
+        isLocationCallbackActive=false;
+        locationCallback=new LocationCallback(){
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                onLocationChanged(locationResult.getLastLocation());
+            }
+        };
         mDataHolder=dataHolder;
-        FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(context);
+        client = LocationServices.getFusedLocationProviderClient(context);
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -47,21 +59,36 @@ public class Gps {
                         }
                     }
                 });
+        isLocationCallbackActive=true;
         client.requestLocationUpdates(
                 LocationRequest.create()
                         .setInterval(1000)
                         .setFastestInterval(500)
                         .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 ,
-                new LocationCallback(){
-                    @Override
-                    public void onLocationResult(LocationResult locationResult) {
-                        super.onLocationResult(locationResult);
-                        onLocationChanged(locationResult.getLastLocation());
-                    }
-
-                },null
+                locationCallback
+                ,null
         );
+    }
+
+    @SuppressLint("MissingPermission")
+    public void StartGPS(){
+        if(isLocationCallbackActive) return;
+        isLocationCallbackActive=true;
+        client.requestLocationUpdates(
+                LocationRequest.create()
+                        .setInterval(1000)
+                        .setFastestInterval(500)
+                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                ,
+                locationCallback
+                ,null
+        );
+    }
+    public void StopGPS(){
+        if(!isLocationCallbackActive) return;
+        client.removeLocationUpdates(locationCallback);
+        isLocationCallbackActive=false;
     }
     public void onLocationChanged(Location location) {
         /*setLatitude(location.getLatitude());

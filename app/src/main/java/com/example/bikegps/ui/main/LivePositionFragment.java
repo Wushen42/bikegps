@@ -29,6 +29,7 @@ import com.example.bikegps.R;
 
 import java.text.DecimalFormat;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -55,6 +56,7 @@ public class LivePositionFragment extends Fragment {
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
 
                 dataModel=((AcquisitionService.MyBinder) iBinder).getDataHolder();
+                final AcquisitionService.MyBinder binder = ((AcquisitionService.MyBinder) iBinder);
                 final TextView speedView = root.findViewById(R.id.speed_textView);
                 final TextView altitudeView = root.findViewById(R.id.altitude);
                 final TextView compassText = root.findViewById(R.id.compass_text);
@@ -94,6 +96,7 @@ public class LivePositionFragment extends Fragment {
                     @Override
                     public void onClick(View view) {
                         Toast.makeText(view.getContext(),"Restart Travel",Toast.LENGTH_SHORT).show();
+                        binder.StartAction();
                         dataModel.setLastKnownLocationLocation(null);
                         dataModel.setDistance(0.0);
                         dataModel.setState(R.string.running);
@@ -108,6 +111,7 @@ public class LivePositionFragment extends Fragment {
                     public void onClick(View view) {
                         Toast.makeText(view.getContext(),"Stop Travel",Toast.LENGTH_SHORT).show();
                         dataModel.setState(R.string.stop);
+                        binder.StopAction();
                         getContext().stopService(mI);
                     }
                 });

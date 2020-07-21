@@ -1,26 +1,13 @@
 package com.example.bikegps.data;
 
-import android.app.Application;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.hardware.Sensor;
-import android.hardware.SensorManager;
 import android.location.Location;
-import android.util.Log;
 
 import androidx.arch.core.util.Function;
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
-import androidx.lifecycle.ViewModel;
 
 import com.example.bikegps.R;
-import com.google.android.gms.location.FusedLocationProviderClient;
-
-import java.util.List;
 
 public class DataHolder {
 
@@ -108,13 +95,24 @@ public class DataHolder {
         return mLastKnownLocation;
     }
 
+    private MutableLiveData<Long> mElapsedTimeMS =new MutableLiveData<>();
+    public void setElapsedTimeMS(Long l){
+        mElapsedTimeMS.postValue(l);
+    }
+    public LiveData<Long> getElapsedTimeMS(){
+        return mElapsedTimeMS;
+    }
 
     public DataHolder(){
+        Reset();
+    }
+    public void Reset(){
         setDistance(0.0);
         setLastKnownLocationLocation(null);
         setCurrentLocation(null);
         setRotationCompass(0);
         setState(R.string.stop);
+        setElapsedTimeMS(0L);
     }
 
 }
