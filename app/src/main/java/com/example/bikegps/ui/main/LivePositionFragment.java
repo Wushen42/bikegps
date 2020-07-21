@@ -63,6 +63,7 @@ public class LivePositionFragment extends Fragment {
                 dataModel.getCurrentLocation().observe(getViewLifecycleOwner(), new Observer<Location>() {
                     @Override
                     public void onChanged(Location location) {
+                        if( location==null) return;
                         speedView.setText(new DecimalFormat("#.#").format(location.getSpeed()*3.6));
                         altitudeView.setText(trimNumber(location.getAltitude())+" m");
                     }
@@ -79,7 +80,7 @@ public class LivePositionFragment extends Fragment {
                         compassImage.setRotation((float)-i);
                     }
                 });
-
+                distanceText.setText(new DecimalFormat("#.#").format(dataModel.getDistance().getValue()/1000));
                 dataModel.getDistance().observe(getViewLifecycleOwner(), new Observer<Double>() {
                     @Override
                     public void onChanged(Double aDouble) {
