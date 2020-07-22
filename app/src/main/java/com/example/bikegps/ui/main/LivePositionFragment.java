@@ -2,6 +2,8 @@ package com.example.bikegps.ui.main;
 
 import android.app.Service;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.location.Location;
@@ -14,12 +16,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 
@@ -28,8 +32,13 @@ import com.example.bikegps.data.AcquisitionService;
 import com.example.bikegps.data.DataHolder;
 import com.example.bikegps.R;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -64,12 +73,12 @@ public class LivePositionFragment extends Fragment {
                 final TextView compassText = root.findViewById(R.id.compass_text);
                 final ImageView compassImage = root.findViewById(R.id.compassImage);
                 final TextView distanceText = root.findViewById(R.id.distance);
-
+                final TextView timeText = root.findViewById(R.id.timerText);
                 dataModel.getCurrentLocation().observe(getViewLifecycleOwner(), new Observer<Location>() {
                     @Override
                     public void onChanged(Location location) {
                         if( location==null) return;
-                        speedView.setText(new DecimalFormat("#.#").format(location.getSpeed()*3.6));
+                        if(location.getSpeedAccuracyMetersPerSecond()>0) speedView.setText(new DecimalFormat("#.#").format(location.getSpeed()*3.6));
                         altitudeView.setText(trimNumber(location.getAltitude())+" m");
                     }
                 });
@@ -92,11 +101,22 @@ public class LivePositionFragment extends Fragment {
                         distanceText.setText(new DecimalFormat("#.#").format(aDouble/1000));
                     }
                 });
-
+                dataModel.getElapsedTimeMS().observe(getViewLifecycleOwner(), new Observer<Long>() {
+                    @Override
+                    public void onChanged(Long millis) {
+                        timeText.setText(String.format("%02d:%02d:%02d",
+                                TimeUnit.MILLISECONDS.toHours(millis),
+                                TimeUnit.MILLISECONDS.toMinutes(millis) -
+                                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)), // The change is in this line
+                                TimeUnit.MILLISECONDS.toSeconds(millis) -
+                                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis))));
+                    }
+                });
                 final Button startButton = root.findViewById(R.id.buttonStart);
                 final Button stopButton = root.findViewById(R.id.buttonStop);
                 final Button pauseButton = root.findViewById(R.id.buttonPause);
                 final Button resumeButton = root.findViewById(R.id.buttonResume);
+                final Button saveButton = root.findViewById(R.id.buttonSave);
                 try{
                     switch(dataModel.getState().getValue()){
                         case (R.string.running):
@@ -121,7 +141,6 @@ public class LivePositionFragment extends Fragment {
                 startButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Toast.makeText(view.getContext(),"Start Travel",Toast.LENGTH_SHORT).show();
                         binder.StartAction();
                         startButton.setVisibility(View.GONE);
                         pauseButton.setVisibility(View.VISIBLE);
@@ -134,7 +153,6 @@ public class LivePositionFragment extends Fragment {
                 stopButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Toast.makeText(view.getContext(),"Stop Travel",Toast.LENGTH_SHORT).show();
                         binder.StopAction();
                         startButton.setVisibility(View.VISIBLE);
                         resumeButton.setVisibility(View.GONE);
@@ -146,7 +164,6 @@ public class LivePositionFragment extends Fragment {
                 pauseButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Toast.makeText(view.getContext(),"Resume Travel",Toast.LENGTH_SHORT).show();
                         binder.PauseAction();
                         startButton.setVisibility(View.GONE);
                         resumeButton.setVisibility(View.VISIBLE);
@@ -157,12 +174,49 @@ public class LivePositionFragment extends Fragment {
                 resumeButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Toast.makeText(view.getContext(),"Pause Travel",Toast.LENGTH_SHORT).show();
                         binder.ResumeAction();
                         startButton.setVisibility(View.GONE);
                         resumeButton.setVisibility(View.GONE);
                         pauseButton.setVisibility(View.VISIBLE);
                         stopButton.setVisibility(View.VISIBLE);
+                    }
+                });
+                saveButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        final Context context=view.getContext();
+                        ArrayList<Location> locations=dataModel.getLocationList();
+                        AlertDialog.Builder alert = new AlertDialog.Builder(context);
+
+                        alert.setMessage("Travel:");
+
+// Set an EditText view to get user input
+                        final EditText input = new EditText(context);
+                        input.setHint("filename");
+                        alert.setView(input);
+
+                        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                String value = input.getText().toString();
+
+                                try {
+                                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(value+".txt", Context.MODE_PRIVATE));
+                                    outputStreamWriter.write(dataModel.getLocationList().toString());
+                                    outputStreamWriter.close();
+                                }
+                                catch (IOException e) {
+                                    Log.e("Exception", "File write failed: " + e.toString());
+                                }
+                            }
+                        });
+
+                        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                Toast.makeText(context,"canceled",Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                        alert.show();
                     }
                 });
 

@@ -34,8 +34,6 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         // getItem is called to instantiate the fragment for the given page.
         // Return a PlaceholderFragment (defined as a static inner class below).
         if(position== 0) return LivePositionFragment.newInstance();
-        if(position==1) return Recording.newInstance();
-        if (position ==2) return SettingsFragment.newInstance("p1","p2");
         return null;
     }
 

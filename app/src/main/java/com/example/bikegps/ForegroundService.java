@@ -69,7 +69,7 @@ public class ForegroundService extends Service {
         @Override
         public void onChanged(Location location) {
             if(location==null) return;
-            if(location.getSpeedAccuracyMetersPerSecond()==0.0) return;
+            if(location.getSpeedAccuracyMetersPerSecond()<=0.0) return;
             mSpeed=location.getSpeed();
         }
     };
@@ -154,7 +154,6 @@ public class ForegroundService extends Service {
                 .build();
     }
     private void writeNotification(){
-        Log.d("Notif","writeNotification");
         NotificationManagerCompat.from(this).notify(1,consistentNotification());
     }
 
@@ -166,46 +165,6 @@ public class ForegroundService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent,flags,startId);
-
-
-
-       /* title=DataHolder.getInstance(this).getState().getValue();
-        Float tSpeed=DataHolder.getInstance(this).getSpeed().getValue();
-        mSpeed= tSpeed==null?0:tSpeed;
-        Double tDouble=DataHolder.getInstance(this).getDistance().getValue();
-        distance= tDouble==null?0:tDouble;
-        writeNotification();
-
-        //do heavy work on a background thread
-        //stopSelf();
-        DataHolder.getInstance(this).getState().observe( this,new Observer<String>() {
-            @Override
-            public void onChanged(String state) {
-                title=state;
-                writeNotification();
-            }
-        });
-        DataHolder.getInstance(this).getSpeed().observe( this,new Observer<Float>() {
-            @Override
-            public void onChanged(Float speed) {
-                mSpeed=speed;
-                writeNotification();
-            }
-        });
-        DataHolder.getInstance(this).getDistance().observe( this,new Observer<Double>() {
-            @Override
-            public void onChanged(Double dist) {
-                distance=dist;
-                writeNotification();
-            }
-        });
-        DataHolder.getInstance(this).getDirectionCompass().observe(this, new Observer<String>() {
-            @Override
-            public void onChanged(String s) {
-               // notificationLayout.setTextViewText(R.id.notification_title,s);
-                writeNotification();
-            }
-        });*/
 
         return START_NOT_STICKY;
     }
