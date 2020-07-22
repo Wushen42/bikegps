@@ -142,6 +142,7 @@
                 android:layout_height="wrap_content"
                 android:background="@color/colorBlack"
                 android:gravity="center"
+
                 android:orientation="horizontal">
 
                 <Button
@@ -151,6 +152,7 @@
                     android:background="@drawable/round_corner_button"
                     android:radius="25dp"
                     android:text="@string/start"
+                    android:layout_marginHorizontal="@dimen/list_item_spacing_half"
 
                     />
 
@@ -161,7 +163,18 @@
                     android:background="@drawable/round_corner_button"
                     android:radius="25dp"
                     android:text="@string/pause"
-
+                    android:layout_marginHorizontal="@dimen/list_item_spacing_half"
+                    android:visibility="gone"
+                    />
+                <Button
+                    android:id="@+id/buttonResume"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/round_corner_button"
+                    android:radius="25dp"
+                    android:text="@string/resume"
+                    android:layout_marginHorizontal="@dimen/list_item_spacing_half"
+                    android:visibility="gone"
                     />
 
                 <Button
@@ -171,7 +184,8 @@
                     android:background="@drawable/round_corner_button"
                     android:radius="25dp"
                     android:text="@string/stop"
-
+                    android:layout_marginHorizontal="@dimen/list_item_spacing_half"
+                    android:visibility="gone"
                     />
             </LinearLayout>
 

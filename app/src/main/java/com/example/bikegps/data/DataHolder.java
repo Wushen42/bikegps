@@ -9,7 +9,14 @@ import androidx.lifecycle.Transformations;
 
 import com.example.bikegps.R;
 
+import java.util.ArrayList;
+
 public class DataHolder {
+
+    private ArrayList<Location> mLocationList = new ArrayList<>();
+    public ArrayList<Location> getLocationList(){
+        return mLocationList;
+    }
 
     private MutableLiveData<Integer> mRotationCompass =new MutableLiveData<>();
     public void setRotationCompass(Integer i){
@@ -63,7 +70,7 @@ public class DataHolder {
 
     private MutableLiveData<Location> mCurrentLocation = new MutableLiveData<>();
     public void setCurrentLocation(Location loc){
-        tryUpdate(loc,getLastKnownLocationLocation().getValue());
+        if(loc!=null)tryUpdate(loc,getLastKnownLocationLocation().getValue());
         mCurrentLocation.postValue(loc);
     }
     private void tryUpdate(Location current,Location last){
@@ -89,6 +96,7 @@ public class DataHolder {
 
     private MutableLiveData<Location> mLastKnownLocation = new MutableLiveData<>();
     public void setLastKnownLocationLocation(Location loc){
+        if(loc !=null) mLocationList.add(loc);
         mLastKnownLocation.postValue(loc);
     }
     public LiveData<Location> getLastKnownLocationLocation(){
@@ -107,6 +115,7 @@ public class DataHolder {
         Reset();
     }
     public void Reset(){
+        mLocationList.clear();
         setDistance(0.0);
         setLastKnownLocationLocation(null);
         setCurrentLocation(null);

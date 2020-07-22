@@ -1,5 +1,6 @@
 package com.example.bikegps;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -35,6 +36,9 @@ import com.example.bikegps.data.Receiver;
 
 import java.text.DecimalFormat;
 import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import static android.app.Notification.EXTRA_NOTIFICATION_ID;
 
@@ -42,14 +46,14 @@ public class ForegroundService extends Service {
     public static final String CHANNEL_ID = "ForegroundServiceChannel";
     private DataHolder mDataModel;
     private String title="Stopped";
-    private String toto="ah";
+    private String mTimeElapsed = "0:00:00s";
     private float mSpeed=0;
     private double mDistance=0;
     public ForegroundService() {
     }
 
     private String getMessage(){
-        return new DecimalFormat("#.#").format(mSpeed*3.6)+"km/h -- distance: "+trimNumberOne(mDistance/1000)+" km";
+        return new DecimalFormat("#.#").format(mSpeed*3.6)+"km/h -- distance: "+trimNumberOne(mDistance/1000)+" km "+mTimeElapsed;
     }
     private String formatSpeed(float s){
         return trimNumber(s)+" km/h";
@@ -64,21 +68,47 @@ public class ForegroundService extends Service {
     private Observer<Location> locationObserver =new Observer<Location>() {
         @Override
         public void onChanged(Location location) {
+            if(location==null) return;
+            if(location.getSpeedAccuracyMetersPerSecond()==0.0) return;
             mSpeed=location.getSpeed();
-            writeNotification();
         }
     };
     private Observer<Double> distanceObserver = new Observer<Double>() {
         @Override
         public void onChanged(Double aDouble) {
             mDistance=aDouble;
-            writeNotification();
         }
     };
+    private Observer<Integer> stateObserver = new Observer<Integer>() {
+        @Override
+        public void onChanged(Integer integer) {
+            title=getString(integer);
+        }
+    };
+    private Observer<Long> timeElapsedObserver = new Observer<Long>() {
+        @SuppressLint("DefaultLocale")
+        @Override
+        public void onChanged(Long millis) {
+            mTimeElapsed=String.format("%02d:%02d:%02d",
+                    TimeUnit.MILLISECONDS.toHours(millis),
+                    TimeUnit.MILLISECONDS.toMinutes(millis) -
+                    TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)), // The change is in this line
+                    TimeUnit.MILLISECONDS.toSeconds(millis) -
+                            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+        }
+    };
+    private Timer mTimer;
     @Override
     public void onCreate() {
         super.onCreate();
         Intent mIntent = new Intent(getApplicationContext(),AcquisitionService.class);
+        mTimer=new Timer();
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                writeNotification();
+            }
+        },0,1000);
         mServiceConnection=new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
@@ -86,12 +116,16 @@ public class ForegroundService extends Service {
                 mDataModel=((AcquisitionService.MyBinder) iBinder).getDataHolder();
                 mDataModel.getCurrentLocation().observeForever(locationObserver);
                 mDataModel.getDistance().observeForever(distanceObserver);
+                mDataModel.getState().observeForever(stateObserver);
+                mDataModel.getElapsedTimeMS().observeForever(timeElapsedObserver);
             }
 
             @Override
             public void onServiceDisconnected(ComponentName componentName) {
                 mDataModel.getCurrentLocation().removeObserver(locationObserver);
-                mDataModel.getDistance().observeForever(distanceObserver);
+                mDataModel.getDistance().removeObserver(distanceObserver);
+                mDataModel.getState().removeObserver(stateObserver);
+                mDataModel.getElapsedTimeMS().removeObserver(timeElapsedObserver);
             }
         };
 
@@ -180,10 +214,15 @@ public class ForegroundService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stopSelf();
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        if(manager.getNotificationChannel(CHANNEL_ID)!=null)
+            manager.deleteNotificationChannel(CHANNEL_ID);
         mDataModel.getCurrentLocation().removeObserver(locationObserver);
         mDataModel.getDistance().removeObserver(distanceObserver);
         unbindService(mServiceConnection);
+        mTimer.cancel();
+        stopSelf();
+
     }
 
     @Nullable
@@ -193,15 +232,13 @@ public class ForegroundService extends Service {
     }
 
     private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel serviceChannel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "Foreground Service Channel",
-                    NotificationManager.IMPORTANCE_LOW
-            );
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if(manager.getNotificationChannel(CHANNEL_ID)==null)
-                 manager.createNotificationChannel(serviceChannel);
-        }
+        NotificationChannel serviceChannel = new NotificationChannel(
+                CHANNEL_ID,
+                "Foreground Service Channel",
+                NotificationManager.IMPORTANCE_LOW
+        );
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        if(manager.getNotificationChannel(CHANNEL_ID)==null)
+             manager.createNotificationChannel(serviceChannel);
     }
 }

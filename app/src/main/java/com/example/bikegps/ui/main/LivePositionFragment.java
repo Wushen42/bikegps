@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.location.Location;
 import android.net.sip.SipSession;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -46,6 +47,7 @@ public class LivePositionFragment extends Fragment {
         fragment.setArguments(bundle);
         return fragment;
     }
+
     ServiceConnection mServiceConnection;
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -62,6 +64,7 @@ public class LivePositionFragment extends Fragment {
                 final TextView compassText = root.findViewById(R.id.compass_text);
                 final ImageView compassImage = root.findViewById(R.id.compassImage);
                 final TextView distanceText = root.findViewById(R.id.distance);
+
                 dataModel.getCurrentLocation().observe(getViewLifecycleOwner(), new Observer<Location>() {
                     @Override
                     public void onChanged(Location location) {
@@ -91,30 +94,78 @@ public class LivePositionFragment extends Fragment {
                 });
 
                 final Button startButton = root.findViewById(R.id.buttonStart);
-                final Intent mI=new Intent(getContext(),ForegroundService.class);
+                final Button stopButton = root.findViewById(R.id.buttonStop);
+                final Button pauseButton = root.findViewById(R.id.buttonPause);
+                final Button resumeButton = root.findViewById(R.id.buttonResume);
+                try{
+                    switch(dataModel.getState().getValue()){
+                        case (R.string.running):
+                            startButton.setVisibility(View.GONE);
+                            pauseButton.setVisibility(View.VISIBLE);
+                            stopButton.setVisibility(View.VISIBLE);
+                            break;
+                        case (R.string.pause):
+                            startButton.setVisibility(View.GONE);
+                            resumeButton.setVisibility(View.VISIBLE);
+                            stopButton.setVisibility(View.VISIBLE);
+                            break;
+
+                    }
+                }catch (NullPointerException npe){
+                    Log.w("State","No State Available");
+                }
+
+                final Intent foregroundServiceIntent=new Intent(getContext(),ForegroundService.class);
+
+
                 startButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Toast.makeText(view.getContext(),"Restart Travel",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(view.getContext(),"Start Travel",Toast.LENGTH_SHORT).show();
                         binder.StartAction();
-                        dataModel.setLastKnownLocationLocation(null);
-                        dataModel.setDistance(0.0);
-                        dataModel.setState(R.string.running);
-
-                        getContext().startService(mI);
+                        startButton.setVisibility(View.GONE);
+                        pauseButton.setVisibility(View.VISIBLE);
+                        stopButton.setVisibility(View.VISIBLE);
+                        getContext().startService(foregroundServiceIntent);
                     }
                 });
 
-                final Button stopButton = root.findViewById(R.id.buttonStop);
+
                 stopButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         Toast.makeText(view.getContext(),"Stop Travel",Toast.LENGTH_SHORT).show();
-                        dataModel.setState(R.string.stop);
                         binder.StopAction();
-                        getContext().stopService(mI);
+                        startButton.setVisibility(View.VISIBLE);
+                        resumeButton.setVisibility(View.GONE);
+                        pauseButton.setVisibility(View.GONE);
+                        stopButton.setVisibility(View.GONE);
+                        getContext().stopService(foregroundServiceIntent);
                     }
                 });
+                pauseButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Toast.makeText(view.getContext(),"Resume Travel",Toast.LENGTH_SHORT).show();
+                        binder.PauseAction();
+                        startButton.setVisibility(View.GONE);
+                        resumeButton.setVisibility(View.VISIBLE);
+                        pauseButton.setVisibility(View.GONE);
+                        stopButton.setVisibility(View.VISIBLE);
+                    }
+                });
+                resumeButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Toast.makeText(view.getContext(),"Pause Travel",Toast.LENGTH_SHORT).show();
+                        binder.ResumeAction();
+                        startButton.setVisibility(View.GONE);
+                        resumeButton.setVisibility(View.GONE);
+                        pauseButton.setVisibility(View.VISIBLE);
+                        stopButton.setVisibility(View.VISIBLE);
+                    }
+                });
+
             }
 
             @Override
