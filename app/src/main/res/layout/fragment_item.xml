@@ -18,7 +18,15 @@
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/text_margin"
         android:textAppearance="?attr/textAppearanceListItem" />
-
+    <ImageButton
+        android:id="@+id/mapButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:backgroundTint="@color/colorBlack"
+        android:layout_margin="@dimen/text_margin"
+        android:foreground="@drawable/ic_map_location"
+        android:foregroundTint="@color/colorWhite" />
     <ImageButton
         android:id="@+id/shareButton"
         android:layout_width="wrap_content"
