@@ -200,9 +200,12 @@ public class LivePositionFragment extends Fragment {
                                 String value = input.getText().toString();
 
                                 try {
-                                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(value+".txt", Context.MODE_PRIVATE));
+                                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(value, Context.MODE_PRIVATE));
                                     outputStreamWriter.write(dataModel.getLocationList().toString());
                                     outputStreamWriter.close();
+                                    Intent intent=new Intent(String.valueOf(R.string.new_file_saved));
+                                    intent.putExtra("filename",value);
+                                    getActivity().sendBroadcast(intent);
                                 }
                                 catch (IOException e) {
                                     Log.e("Exception", "File write failed: " + e.toString());

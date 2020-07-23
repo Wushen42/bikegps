@@ -20,7 +20,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
 
     @StringRes
-    private static final int[] TAB_TITLES = new int[]{R.string.live_data/*,R.string.record ,R.string.settings*/};
+    private static final int[] TAB_TITLES = new int[]{R.string.live_data,R.string.record /*,R.string.settings*/};
     private final Context mContext;
 
     public SectionsPagerAdapter(Context context, FragmentManager fm) {
@@ -34,6 +34,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         // getItem is called to instantiate the fragment for the given page.
         // Return a PlaceholderFragment (defined as a static inner class below).
         if(position== 0) return LivePositionFragment.newInstance();
+        if(position==1) return TourFragment.newInstance(1);
         return null;
     }
 

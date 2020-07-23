@@ -18,6 +18,7 @@
     <string name="stop">Stop</string>
     <string name="km">km</string>
     <string name="save">Save</string>
+    <string name="new_file_saved">NEW_FILE_SAVED</string>
     <string name="large_text">
         "Material is the metaphor.\n\n"
 
