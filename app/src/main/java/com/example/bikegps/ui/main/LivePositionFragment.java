@@ -201,7 +201,7 @@ public class LivePositionFragment extends Fragment {
 
                                 try {
                                     OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(value, Context.MODE_PRIVATE));
-                                    outputStreamWriter.write(dataModel.toString());
+                                    outputStreamWriter.write(dataModel.toString(value));
                                     outputStreamWriter.close();
                                     Intent intent=new Intent(String.valueOf(R.string.new_file_saved));
                                     intent.putExtra("filename",value);

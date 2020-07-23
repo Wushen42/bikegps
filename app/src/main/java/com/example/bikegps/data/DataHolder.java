@@ -148,31 +148,46 @@ public class DataHolder {
         setElapsedTimeMS(0L);
     }
 
+    private JSONObject createJsonData(JSONObject json) throws JSONException {
+        if(json == null)json = new JSONObject();
+        json.put("duration",Helpers.getElapsedTime(mElapsedTimeMS.getValue()));
+        json.put("distance",mDistance.getValue());
+        long elapsedRealTime = new Date().getTime();
+        json.put("date", Helpers.getDate(elapsedRealTime,"dd-MM-yyyy hh:mm:ss"));
+        json.put("dateTimeMs",elapsedRealTime);
+        JSONArray locationArray = new JSONArray();
+        if(mLocationList!=null){
+            for (Location location : mLocationList){
+                locationArray.put(
+                        new JSONObject()
+                                .put("lat",location.getLatitude())
+                                .put("lng",location.getLongitude())
+                                .put("alt",location.getAltitude())
+                );
+            }
+        }
+
+        json.put("travel",locationArray);
+        return json;
+    }
+
     @NonNull
     @Override
     public String toString() {
         try {
-            JSONObject json = new JSONObject();
-            json.put("duration",Helpers.getElapsedTime(mElapsedTimeMS.getValue()));
-            json.put("distance",mDistance.getValue());
-            long elapsedRealTime = new Date().getTime();
-            json.put("date", Helpers.getDate(elapsedRealTime,"dd-MM-yyyy hh:mm:ss"));
-            json.put("dateTimeMs",elapsedRealTime);
-            JSONArray locationArray = new JSONArray();
-            if(mLocationList!=null){
-                for (Location location : mLocationList){
-                    locationArray.put(
-                            new JSONObject()
-                                    .put("lat",location.getLatitude())
-                                    .put("lng",location.getLongitude())
-                                    .put("alt",location.getAltitude())
-                    );
-                }
-            }
+            return createJsonData(null).toString(4);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return e.toString();
+        }
 
-            json.put("travel",locationArray);
+    }
 
-            return json.toString(4);
+    public String toString(String filename) {
+        try {
+            JSONObject jsonObject=new JSONObject();
+            jsonObject.put("name",filename);
+            return createJsonData(jsonObject).toString(4);
         } catch (JSONException e) {
             e.printStackTrace();
             return e.toString();
