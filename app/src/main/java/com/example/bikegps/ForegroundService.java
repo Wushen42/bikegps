@@ -6,12 +6,19 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothSocket;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.location.Location;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.ParcelUuid;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,6 +30,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.core.app.BundleCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -34,13 +43,29 @@ import com.example.bikegps.data.AcquisitionService;
 import com.example.bikegps.data.DataHolder;
 import com.example.bikegps.data.Receiver;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static android.app.Notification.EXTRA_NOTIFICATION_ID;
+import static android.bluetooth.BluetoothProfile.A2DP;
+import static android.bluetooth.BluetoothProfile.GATT;
+import static android.bluetooth.BluetoothProfile.GATT_SERVER;
+import static android.bluetooth.BluetoothProfile.HEADSET;
+import static android.bluetooth.BluetoothProfile.STATE_CONNECTED;
+import static android.bluetooth.BluetoothProfile.STATE_CONNECTING;
+import static android.bluetooth.BluetoothProfile.STATE_DISCONNECTED;
+import static android.bluetooth.BluetoothProfile.STATE_DISCONNECTING;
 
 public class ForegroundService extends Service {
     public static final String CHANNEL_ID = "ForegroundServiceChannel";
@@ -49,6 +74,7 @@ public class ForegroundService extends Service {
     private String mTimeElapsed = "0:00:00s";
     private float mSpeed=0;
     private double mDistance=0;
+    private Bluetooth mBluetooth;
     public ForegroundService() {
     }
 
@@ -93,9 +119,11 @@ public class ForegroundService extends Service {
         }
     };
     private Timer mTimer;
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public void onCreate() {
         super.onCreate();
+        mBluetooth=new Bluetooth((BluetoothManager) getSystemService(BLUETOOTH_SERVICE));
         Intent mIntent = new Intent(getApplicationContext(),AcquisitionService.class);
         mTimer=new Timer();
         mTimer.schedule(new TimerTask() {
@@ -124,11 +152,16 @@ public class ForegroundService extends Service {
             }
         };
 
+
         bindService(mIntent,mServiceConnection,Service.BIND_AUTO_CREATE);
        // mDataHolder= new ViewModelProvider().get(DataHolder.class);
+
         createNotificationChannel();
         this.startForeground(1, consistentNotification());
     }
+
+
+
     private Notification consistentNotification(){
         Intent pauseIntent = new Intent(this, Receiver.class);
         pauseIntent.setAction(getResources().getString(R.string.intent_actions));
@@ -150,6 +183,7 @@ public class ForegroundService extends Service {
     }
     private void writeNotification(){
         NotificationManagerCompat.from(this).notify(1,consistentNotification());
+        mBluetooth.write("coucou");
     }
 
     private String formatHeader(float speed){
