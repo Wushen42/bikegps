@@ -48,8 +48,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Timer;
@@ -71,25 +73,24 @@ public class ForegroundService extends Service {
     public static final String CHANNEL_ID = "ForegroundServiceChannel";
     private DataHolder mDataModel;
     private String title="Stopped";
-    private String mTimeElapsed = "0:00:00s";
+    private String mTimeElapsed = "0:00:00";
     private float mSpeed=0;
     private double mDistance=0;
     private Bluetooth mBluetooth;
+    private DecimalFormat df=new DecimalFormat("0.0");
     public ForegroundService() {
     }
 
-    private String getMessage(){
-        return new DecimalFormat("#.#").format(mSpeed*3.6)+"km/h -- distance: "+trimNumberOne(mDistance/1000)+" km "+mTimeElapsed;
-    }
-    private String formatSpeed(float s){
-        return trimNumber(s)+" km/h";
+    private String bluetoothMessage(){
+        return df.format(mSpeed*3.6)+";"+df.format(mDistance/1000)+";"+mTimeElapsed+";";
     }
 
-    private String trimNumber(float f){
-        return new DecimalFormat("#").format(f);
+    private String getMessage(){
+        return new DecimalFormat("0.0").format(mSpeed*3.6)+"km/h -- distance: "+trimNumberOne(mDistance/1000)+" km -- "+mTimeElapsed;
     }
+
     private String trimNumberOne(double f){
-        return new DecimalFormat("#.#").format(f);
+        return new DecimalFormat("0.0").format(f);
     }
     private Observer<Location> locationObserver =new Observer<Location>() {
         @Override
@@ -123,6 +124,7 @@ public class ForegroundService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        df.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
         mBluetooth=new Bluetooth((BluetoothManager) getSystemService(BLUETOOTH_SERVICE));
         Intent mIntent = new Intent(getApplicationContext(),AcquisitionService.class);
         mTimer=new Timer();
@@ -183,11 +185,7 @@ public class ForegroundService extends Service {
     }
     private void writeNotification(){
         NotificationManagerCompat.from(this).notify(1,consistentNotification());
-        mBluetooth.write("coucou");
-    }
-
-    private String formatHeader(float speed){
-        return new String(trimNumber(speed)+"km/h  ");
+        mBluetooth.write(bluetoothMessage());
     }
     ServiceConnection mServiceConnection;
 
@@ -209,6 +207,7 @@ public class ForegroundService extends Service {
         mDataModel.getDistance().removeObserver(distanceObserver);
         unbindService(mServiceConnection);
         mTimer.cancel();
+        mBluetooth.cancel();
         stopSelf();
 
     }
